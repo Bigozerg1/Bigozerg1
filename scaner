@@ -1,0 +1,36 @@
+import cv2
+import numpy as np
+
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    blue_lower = np.array([100, 100, 70])
+    blue_upper = np.array([148, 255, 255])
+
+    blue_mask = cv2.inRange(hsv, blue_lower, blue_upper)
+    blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
+
+    contours, hierarchy = cv2.findContours(blue_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > 400:
+            x, y, w, h = cv2.boundingRect(contour)
+            x_medium = int(x + w / 2)
+            y_medium = int(y + h / 2)
+            cv2.line(frame, (x_medium, 0), (x_medium, 480), (0, 255, 0), 2)
+            cv2.line(frame, (0, y_medium), (648, y_medium), (0, 255, 0), 2)
+
+    cv2.imshow("Original", frame)
+    cv2.imshow("Blue mask", blue)
+
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
